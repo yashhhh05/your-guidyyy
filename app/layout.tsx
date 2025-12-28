@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Navbar from "@/components/Navbar";
+import { ClerkProvider } from "@clerk/nextjs";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,9 +27,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <ClerkProvider appearance={{variables: {colorPrimary :"#fe5933"}}}>
+        <Navbar/> {/* It means Navbar is common for all pages */}
+        {children}  {/* children shows perticular what that page has ex sign in */}
+        </ClerkProvider>
       </body>
     </html>
   );
