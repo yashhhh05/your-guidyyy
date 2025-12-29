@@ -1,9 +1,18 @@
 //creating new companions
 
 import CompanionForm from '@/components/CompanionForm'
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
 import React from 'react'
 
-const page = () => {
+const page = async() => {
+
+  //this ensures if no userid means not signed in and cant build companion
+const {userId} = await auth();
+if(!userId){
+    redirect("/sign-in");
+}
+  
   return (
     <main className='min-lg:w-1/3 min-md:w-2/3  items-center justify-center'>
 
