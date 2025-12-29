@@ -38,8 +38,8 @@ interface CreateCompanion {
 interface GetAllCompanions {
   limit?: number;
   page?: number;
-  subject?: string | string[];
-  topic?: string | string[];
+  subject?: string;
+  topic?: string;
 }
 
 interface BuildClient {
@@ -55,7 +55,7 @@ interface CreateUser {
 }
 
 interface SearchParams {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams: { [key: string]: string | string[] | undefined };
 }
 
 interface Avatar {

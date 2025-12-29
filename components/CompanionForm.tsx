@@ -164,10 +164,10 @@ const CompanionForm = () => {
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-                <SelectItem value="casual">
+                <SelectItem value="formal">
                     Formal
                 </SelectItem>
-                <SelectItem value="female">
+                <SelectItem value="casual">
                     Casual
                 </SelectItem>
             </SelectContent>
