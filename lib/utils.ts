@@ -30,7 +30,7 @@ export const configureAssistant = (voice: string, style: string) => {
       voiceId: voiceId,
       stability: 0.4,
       similarityBoost: 0.8,
-      speed: 1,
+      speed: 0.9,
       style: 0.5,
       useSpeakerBoost: true,
     },
@@ -44,6 +44,7 @@ export const configureAssistant = (voice: string, style: string) => {
   
                     Tutor Guidelines:
                     Stick to the given topic - {{ topic }} and subject - {{ subject }} and teach the student about it.
+                    explain in friendly and simple language to help user to get from basic to more about the {{topic}}.
                     Keep the conversation flowing smoothly while maintaining control.
                     From time to time make sure that the student is following you and understands you.
                     Break down the topic into smaller parts and teach the student one part at a time.
