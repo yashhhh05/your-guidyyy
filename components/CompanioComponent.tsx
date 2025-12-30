@@ -6,6 +6,7 @@ import Lottie, { LottieRef, LottieRefCurrentProps } from 'lottie-react';
 import Image from 'next/image';
 import React, { useEffect, useRef, useState } from 'react'
 import soundwaves from "@/constants/soundwaves.json"
+import { addToSessionHistory } from '@/lib/actions/companion.actions';
 
 enum CallStatus {
     INACTIVE = "INACTIVE",
@@ -59,7 +60,10 @@ const CompanioComponent = ({companionId, userName, userImage,name, topic, subjec
   
     useEffect(()=>{
         const onCallStart = ()=> setCallStatus(CallStatus.ACTIVE);
-        const onCallEnd = ()=> setCallStatus(CallStatus.INACTIVE); 
+        const onCallEnd = ()=> {
+            setCallStatus(CallStatus.INACTIVE);
+            addToSessionHistory(companionId);
+        } 
 
         const onMessage =(message : Message)=>{
             //we specifically looking for message of type transcript as vapi sdkreturns all types of messages ex error, used functions

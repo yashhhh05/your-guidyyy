@@ -7,19 +7,26 @@ import SubjectFilter from "@/components/SubjectFilter";
 {/*Companions Libraby - All companions */}
 
 //How searchParam works - object 
-const CompanionPage = async({searchParams}:SearchParams) => {
+interface SearchParams {
+  searchParams: Promise<{
+    subject?: string;
+  }>
+}
+
+//How searchParam works - object
+const Page = async ({ searchParams }: SearchParams) => {
   //  Accept those params and pass it to the function
-  const filters  = await searchParams;
-  const subject = filters.subject ? filters.subject : "";
-  const topic = filters.topic ? filters.topic : "";
+  const { subject } = await searchParams;
 
     //fetch companions for that subject and topic
-  const companions = await getAllCompanions({subject, topic});
+  const companions = await getAllCompanions({
+    subject: subject
+  });
   console.log(companions);
 
 
   return (
-   <main> 
+   <main>
       <section className="flex justify-between gap-4 max-sm:flex-col">
           <h1>Companions Library</h1>
           <div className="flex gap-4">
@@ -40,4 +47,4 @@ const CompanionPage = async({searchParams}:SearchParams) => {
   );
 };
 
-export default CompanionPage;
+export default Page;
