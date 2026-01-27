@@ -6,7 +6,7 @@ import { MobileDropDown } from './MobileDropDown'
 import {SignInButton, UserButton, SignUpButton,SignedOut,SignedIn} from '@clerk/nextjs'
 const Navbar = () => {
   return (
-    <nav className="navbar pb-1">
+    <nav className="navbar pb-1 pt-1">
         <Link href="/">
             <div className='flex items-center gap-2.5 cursor-pointer'>
             <Image src="/images/LogoGuidy.png" alt="Logo" width={110} height={50}/>
