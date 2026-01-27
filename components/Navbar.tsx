@@ -2,18 +2,23 @@ import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import NavItems from './NavItems'
+import { MobileDropDown } from './MobileDropDown'
 import {SignInButton, UserButton, SignUpButton,SignedOut,SignedIn} from '@clerk/nextjs'
 const Navbar = () => {
   return (
-    <nav className="navbar">
+    <nav className="navbar pb-1">
         <Link href="/">
             <div className='flex items-center gap-2.5 cursor-pointer'>
-            <Image src="/images/logo.svg" alt="Logo" width={46} height={44}/>
+            <Image src="/images/LogoGuidy.png" alt="Logo" width={110} height={50}/>
             </div>
         </Link> 
         <div className='flex items-center gap-8'>
-            <NavItems/>
-          
+            <div className="hidden md:flex">
+                <NavItems/>
+            </div>
+            
+            <MobileDropDown />
+            
             <SignedOut>{/* shows code if we signed out */}
                   <SignInButton>
                       <button className='btn-signin'>

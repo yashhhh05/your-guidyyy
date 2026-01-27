@@ -44,7 +44,7 @@ const SearchInput = () => {
             }
         }
         },500)
-    },[searchQuery,router,searchParams,pathname]);
+    },[searchQuery]);
 
   return (
     <div className='relative border border-black rounded-lg items-center flex gap-2 px-2 py-1 h-fit'>

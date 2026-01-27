@@ -22,6 +22,9 @@ const bricolage = Bricolage_Grotesque({
 export const metadata: Metadata = {
   title: "Lets Learn",
   description: "Your Personalized Tutor",
+  icons: {
+    icon: '/icon.png',
+  }
 };
 
 export default function RootLayout({

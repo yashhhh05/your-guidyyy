@@ -22,6 +22,7 @@ const CompanioComponent = ({companionId, userName, userImage,name, topic, subjec
     const [isMuted, setIsMuted] = useState(false);
     const lottieRef = useRef<LottieRefCurrentProps>(null);
     const [messages, setMessages] = useState<SavedMessage[]>([]);
+    const messagesRef = useRef<SavedMessage[]>([]); // Ref to keep track of messages for event listeners
 
 
     const toggleCall = ()=>{
@@ -62,7 +63,7 @@ const CompanioComponent = ({companionId, userName, userImage,name, topic, subjec
         const onCallStart = ()=> setCallStatus(CallStatus.ACTIVE);
         const onCallEnd = ()=> {
             setCallStatus(CallStatus.INACTIVE);
-            addToSessionHistory(companionId);
+            addToSessionHistory(companionId, messagesRef.current);
         } 
 
         const onMessage =(message : Message)=>{
@@ -74,7 +75,11 @@ const CompanioComponent = ({companionId, userName, userImage,name, topic, subjec
                     content : message.transcript,
                 }
 
-                setMessages((prev)=> [newMessage, ...prev]);
+                setMessages((prev)=> {
+                    const updated = [newMessage, ...prev];
+                    messagesRef.current = updated; // Update ref
+                    return updated;
+                });
             }
         }
 

@@ -10,7 +10,7 @@ const navItems = [{label : "Home", href : "/"},
                 {label : "My journey", href : "my-journey"},]
 const NavItems = () => {
 
-   //to know the glance of current page means o know what page currently on 
+   //to know the glance of current page means points to what page currently on 
   const pathname = usePathname()
   
   return (

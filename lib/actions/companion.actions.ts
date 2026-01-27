@@ -3,7 +3,7 @@
 
 //Application logic
 
-import { auth } from "@clerk/nextjs/server"
+import { auth, currentUser } from "@clerk/nextjs/server"
 import { createSupabaseClient } from "../supabase";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
@@ -84,12 +84,13 @@ export const getCompanion = async(id : string) => {
     return data;
 }   
 
-export const addToSessionHistory = async(companionId : string)=>{
+export const addToSessionHistory = async(companionId : string, messages: SavedMessage[])=>{
     const {userId } = await auth();
     const supabase = createSupabaseClient();
     const {data, error} = await supabase.from("session_history").insert({
         companion_id : companionId,
         user_id : userId,
+        transcript: messages // Adding transcript to the insert
     })
 
     if(error){
@@ -98,50 +99,114 @@ export const addToSessionHistory = async(companionId : string)=>{
     return data;
 }
 
-export const getRecentSession = async(limit=10)=>{
-    const supabase = createSupabaseClient();
-    const {data, error} = await supabase.from("session_history").select(`companion_id, companions(*)`)
-    .order("created_at", {ascending : false})
-    .limit(limit);
+export const getCompanionSessions = async (companionId: string) => {
+  const { userId } = await auth();
+  const supabase = createSupabaseClient();
+  
+  const { data, error } = await supabase
+    .from("session_history")
+    .select("*")
+    .eq("companion_id", companionId)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
 
-    if(error){
-        throw new Error(error.message);
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data;
+};
+
+export const getRecentSession = async (limit = 8, page = 1) => {
+  const supabase = createSupabaseClient();
+  const { data, error } = await supabase
+    .from("session_history")
+    .select(`companion_id, companions(*)`)
+    .order("created_at", { ascending: false })
+    .limit(limit * page * 5); // Fetch enough to cover unique filtering
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  // Filter for unique companions
+  const uniqueCompanionIds = new Set();
+  const uniqueCompanions = [];
+
+  for (const item of data) {
+    // Check if companion exists and hasn't been added yet
+    if (item.companions && !uniqueCompanionIds.has(item.companion_id)) {
+      uniqueCompanionIds.add(item.companion_id);
+      uniqueCompanions.push(item.companions);
     }
-    //gets recent sessions for a companion with specific companion_id
-    
-    return data.map(({companions})=> companions);
-}
+  }
 
-export const getUserSessionHistory = async(userId : string, limit=10)=>{
-    const supabase = createSupabaseClient();
-    const {data, error} = await supabase.from("session_history")
+  // Pagination logic
+  const start = (page - 1) * limit;
+  const end = start + limit + 1; // Fetch one extra to check for next page
+  
+  return uniqueCompanions.slice(start, end);
+};
+
+export const getUserSessionHistory = async (userId: string, limit = 8, page = 1) => {
+  const supabase = createSupabaseClient();
+  const { data, error } = await supabase
+    .from("session_history")
     .select(`companion_id, companions(*)`)
     .eq("user_id", userId) //only get data when user_id matches
-    .order("created_at", {ascending : false})
-    .limit(limit);
+    .order("created_at", { ascending: false })
+    .limit(limit * page * 5); // Fetch more to ensure we have enough unique ones
 
-    if(error){
-        throw new Error(error.message);
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  // Filter for unique companions
+  const uniqueCompanionIds = new Set();
+  const uniqueCompanions = [];
+
+  for (const item of data) {
+    // Check if companion exists and hasn't been added yet
+    if (item.companions && !uniqueCompanionIds.has(item.companion_id)) {
+      uniqueCompanionIds.add(item.companion_id);
+      uniqueCompanions.push(item.companions);
     }
-    //gets recent sessions for a companion with specific companion_id
-    
-    return data.map(({companions})=> companions);
-}
+  }
+
+  // Pagination
+  const start = (page - 1) * limit;
+  const end = start + limit + 1; // Fetch one extra to check for next page
+
+  return uniqueCompanions.slice(start, end);
+};
 
 //getting companions user has created to display on profile
-export const getUserCompanions = async(userId : string, limit=10)=>{
+export const getUserCompanions = async(userId : string, limit=8, page=1)=>{
     const supabase = createSupabaseClient();
     const {data, error} = await supabase.from("companions")
     .select()
     .eq("author", userId) //only get data when user_id matches
-    .limit(limit);
+    .limit(limit * page * 5);
 
     if(error){
         throw new Error(error.message);
     }
-    //gets recent sessions for a companion with specific companion_id
     
-    return data;
+    // Filter for unique companions (safety check)
+    const uniqueCompanionIds = new Set();
+    const uniqueCompanions = [];
+
+    for (const item of data) {
+        if (!uniqueCompanionIds.has(item.id)) {
+            uniqueCompanionIds.add(item.id);
+            uniqueCompanions.push(item);
+        }
+    }
+
+    // Pagination
+    const start = (page - 1) * limit;
+    const end = start + limit + 1; // Fetch one extra to check for next page
+
+    return uniqueCompanions.slice(start, end);
 }
 
 
@@ -210,17 +275,35 @@ export const removeBookmark = async (companionId: string, path: string) => {
 };
 
 // It's almost the same as getUserCompanions, but it's for the bookmarked companions
-export const getBookmarkedCompanions = async (userId: string) => {
+export const getBookmarkedCompanions = async (userId: string, limit = 8, page = 1) => {
   const supabase = createSupabaseClient();
   const { data, error } = await supabase
     .from("bookmark")
     .select(`companions:companion_id (*)`) // Notice the (*) to get all the companion data
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .limit(limit * page * 5);
+
   if (error) {
     throw new Error(error.message);
   }
-  // We don't need the bookmarks data, so we return only the companions
-  return data.map(({ companions }) => companions);
+
+  // Filter for unique companions & flatten
+  const uniqueCompanionIds = new Set();
+  const uniqueCompanions = [];
+
+  for (const item of data) {
+    const companion = Array.isArray(item.companions) ? item.companions[0] : item.companions;
+    if (companion && !uniqueCompanionIds.has(companion.id)) {
+      uniqueCompanionIds.add(companion.id);
+      uniqueCompanions.push(companion);
+    }
+  }
+
+  // Pagination
+  const start = (page - 1) * limit;
+  const end = start + limit + 1; // Fetch one extra to check for next page
+
+  return uniqueCompanions.slice(start, end);
 };
 
 export const getBookmarkedCompanionIds = async (userId: string) => {
@@ -235,4 +318,50 @@ export const getBookmarkedCompanionIds = async (userId: string) => {
   }
 
   return data.map((bookmark) => bookmark.companion_id);
+};
+
+// Delete session history for a specific companion
+export const deleteSessionHistory = async (companionId: string) => {
+  const user = await currentUser();
+  if (!user) {
+    throw new Error("Unauthorized");
+  }
+
+  const supabase = createSupabaseClient();
+  const { error } = await supabase
+    .from("session_history")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("companion_id", companionId);
+
+  if (error) {
+    console.error("Error deleting session history:", error);
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/my-journey");
+  revalidatePath("/");
+};
+
+// Delete a companion created by the user
+export const deleteCompanion = async (companionId: string) => {
+  const user = await currentUser();
+  if (!user) {
+    throw new Error("Unauthorized");
+  }
+
+  const supabase = createSupabaseClient();
+  const { error } = await supabase
+    .from("companions")
+    .delete()
+    .eq("id", companionId)
+    .eq("author", user.id); // Ensure only the author can delete
+
+  if (error) {
+    console.error("Error deleting companion:", error);
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/my-journey");
+  revalidatePath("/");
 };

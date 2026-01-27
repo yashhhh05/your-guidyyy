@@ -10,17 +10,19 @@ import SubjectFilter from "@/components/SubjectFilter";
 interface SearchParams {
   searchParams: Promise<{
     subject?: string;
+    topic?: string;
   }>
 }
 
 //How searchParam works - object
 const Page = async ({ searchParams }: SearchParams) => {
   //  Accept those params and pass it to the function
-  const { subject } = await searchParams;
+  const { subject, topic } = await searchParams;
 
     //fetch companions for that subject and topic
   const companions = await getAllCompanions({
-    subject: subject
+    subject: subject,
+    topic: topic
   });
   console.log(companions);
 
@@ -36,11 +38,17 @@ const Page = async ({ searchParams }: SearchParams) => {
       </section>
 
       <section className="companions-grid">
-          {companions.map((companion) => (
+          {companions.length > 0 ? (
+            companions.map((companion) => (
               <CompanionCard key={companion.id} {...companion}
               color={getSubjectColor(companion.subject)}
               />
-          ))}
+            ))
+          ) : (
+            <div className="w-full col-span-full flex justify-center items-center mt-10">
+              <p className="text-xl font-semibold text-gray-500">No companion found</p>
+            </div>
+          )}
       </section>
 
    </main>

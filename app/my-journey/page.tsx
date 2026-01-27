@@ -7,21 +7,29 @@ import Image from 'next/image';
 import { redirect } from 'next/navigation';
 
 
-const MyJourneyPage = async () => {
+interface SearchParams {
+  searchParams: Promise<{
+    page?: string;
+  }>
+}
+
+const MyJourneyPage = async ({ searchParams }: SearchParams) => {
+      const { page } = await searchParams;
+      const pageNumber = page ? parseInt(page) : 1;
       const user = await currentUser();
       if(!user){
          redirect("/sign-in");
       }
 
-      const companions = await getUserCompanions(user.id); //gets how many companions user has created
-      const sessionHistory = await getUserSessionHistory(user.id); //gets how many sessions user has done
-      const bookmarkedCompanions = await getBookmarkedCompanions(user.id);
+      const companions = await getUserCompanions(user.id, 8, pageNumber); //gets how many companions user has created
+      const sessionHistory = await getUserSessionHistory(user.id, 8, pageNumber); //gets how many sessions user has done
+      const bookmarkedCompanions = await getBookmarkedCompanions(user.id, 8, pageNumber);
 
 
   return (
     <main className='min-lg:w-3/4'>
       <section className='flex justify-between gap-4 max-sm:flex-col items-center'>
-        <div className='flex justify-between gap-4 max-sm:flex-col'>
+        <div className='flex justify-between gap-4 max-sm:flex-col items-center'>
           <Image src={user.imageUrl} alt="User" width={110} height={110} className='rounded-lg'/>
             <div className='flex flex-col gap-2'>
                 <h1 className='font-bold text-2xl'>
@@ -59,6 +67,9 @@ const MyJourneyPage = async () => {
             <CompanionsList
               companions={bookmarkedCompanions}
               title="Bookmarked Companions"
+              page={pageNumber}
+              allowPagination={true}
+              type="bookmark"
             />
            </AccordionContent>
           </AccordionItem>
@@ -69,6 +80,9 @@ const MyJourneyPage = async () => {
               <CompanionsList 
                 title="Recent Sessions"
                 companions={sessionHistory}
+                page={pageNumber}
+                allowPagination={true}
+                type="session"
               />
           </AccordionContent>
         </AccordionItem>
@@ -81,6 +95,9 @@ const MyJourneyPage = async () => {
               <CompanionsList 
                 title="My Companions"
                 companions={companions}
+                page={pageNumber}
+                allowPagination={true}
+                type="created"
               />
             </AccordionContent>
         </AccordionItem>

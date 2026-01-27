@@ -1,4 +1,5 @@
 import CompanioComponent from '@/components/CompanioComponent';
+import { TranscriptModal } from '@/components/TranscriptModal';
 import { getCompanion } from '@/lib/actions/companion.actions';
 import { getSubjectColor } from '@/lib/utils';
 import { currentUser } from '@clerk/nextjs/server';
@@ -17,14 +18,14 @@ const CompanionIdPage = async ({ params }: PageProps) => {
   const companion = await getCompanion(id);
   const user = await currentUser();
 
-  const {name, subject, title, topic, duration} = companion; //destructuring companion object
-
   if(!user){
     redirect("/sign-in");
   }
   if(!companion){
     redirect("/");
   }
+
+  const {name, subject, title, topic, duration} = companion; //destructuring companion object
 
   console.log(companion);
   
@@ -51,8 +52,11 @@ const CompanionIdPage = async ({ params }: PageProps) => {
             </div>
 
           </div>
-          <div className='items-start text-2xl max-md:hidden'>
-            {companion.duration} minutes
+          <div className='flex flex-col items-end gap-2 max-md:flex-row max-md:items-center max-md:justify-between max-md:w-full max-md:mt-4'>
+            <TranscriptModal companionId={id} name={name} />
+            <div className='text-2xl font-medium mt-1'>
+               {companion.duration} minutes
+            </div>
           </div>
         </article>
         <CompanioComponent

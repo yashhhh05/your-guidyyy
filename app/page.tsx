@@ -11,12 +11,14 @@ import { getSubjectColor } from '@/lib/utils'
 interface SearchParams {
   searchParams: Promise<{
     subject?: string;
+    page?: string;
   }>
 }
 
 const Page = async ({ searchParams }: SearchParams) => {
-  const { subject } = await searchParams;
-  const recentSessionssCompanions = await getRecentSession(10);
+  const { subject, page } = await searchParams;
+  const pageNumber = page ? parseInt(page) : 1;
+  const recentSessionssCompanions = await getRecentSession(8, pageNumber);
 
   const companions = await getAllCompanions({
     subject: subject, limit: 3
@@ -26,7 +28,7 @@ const Page = async ({ searchParams }: SearchParams) => {
   const bookmarkedIds = user ? await getBookmarkedCompanionIds(user.id) : [];
 
   return (
-    <main>
+    <main className='pt-3'>
       <h1>Popular companions</h1>
       
       <section className="home-section">
@@ -48,6 +50,9 @@ const Page = async ({ searchParams }: SearchParams) => {
         title="Recent Sessions"
         companions={recentSessionssCompanions}
         classNames="w-2/3 max-lg:w-full"
+        page={pageNumber}
+        allowPagination={true}
+        type="session"
         />
         <CTA/>
       </section>
