@@ -4,7 +4,7 @@ import CompanionCard from '@/components/CompanionCard'
 import CompanionsList from '@/components/CompanionsList'
 import CTA from '@/components/CTA'
 import { currentUser } from '@clerk/nextjs/server'
-import { getAllCompanions, getBookmarkedCompanionIds, getRecentSession, getUserSessionHistory } from '@/lib/actions/companion.actions'
+import { getAllCompanions, getBookmarkedCompanionIds, getPopularCompanions, getRecentSession, getUserSessionHistory } from '@/lib/actions/companion.actions'
 import { getSubjectColor } from '@/lib/utils'
 
 
@@ -20,8 +20,8 @@ const Page = async ({ searchParams }: SearchParams) => {
   const pageNumber = page ? parseInt(page) : 1;
   const recentSessionssCompanions = await getRecentSession(8, pageNumber);
 
-  const companions = await getAllCompanions({
-    subject: subject, limit: 3
+  const companions = await getPopularCompanions({
+    limit: 3
   });
 
   const user = await currentUser();
@@ -47,12 +47,11 @@ const Page = async ({ searchParams }: SearchParams) => {
 
       <section className="home-section">
         <CompanionsList 
-        title="Recent Sessions"
+        title="Trending Companions"
         companions={recentSessionssCompanions}
         classNames="w-2/3 max-lg:w-full"
         page={pageNumber}
         allowPagination={true}
-        type="session"
         />
         <CTA/>
       </section>

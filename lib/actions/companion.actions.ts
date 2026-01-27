@@ -130,13 +130,19 @@ export const getRecentSession = async (limit = 8, page = 1) => {
 
   // Filter for unique companions
   const uniqueCompanionIds = new Set();
+  const uniqueNames = new Set();
   const uniqueCompanions = [];
 
   for (const item of data) {
-    // Check if companion exists and hasn't been added yet
+    // Check if companion exists and has metadata
     if (item.companions && !uniqueCompanionIds.has(item.companion_id)) {
-      uniqueCompanionIds.add(item.companion_id);
-      uniqueCompanions.push(item.companions);
+      const companion = Array.isArray(item.companions) ? item.companions[0] : item.companions;
+      
+      if (companion && !uniqueNames.has(companion.name)) {
+        uniqueCompanionIds.add(item.companion_id);
+        uniqueNames.add(companion.name);
+        uniqueCompanions.push(companion);
+      }
     }
   }
 
@@ -145,6 +151,44 @@ export const getRecentSession = async (limit = 8, page = 1) => {
   const end = start + limit + 1; // Fetch one extra to check for next page
   
   return uniqueCompanions.slice(start, end);
+};
+
+// Fetch companions sorted by popularity (session count)
+export const getPopularCompanions = async ({ limit = 3 } = {}) => {
+  const supabase = createSupabaseClient();
+  
+  // Fetch companions and the count of their sessions
+  // Note: This relies on fetching all companions and sorting in memory.
+  // For larger datasets, this should be an RPC or a materialized view.
+  const { data, error } = await supabase
+    .from("companions")
+    .select(`*, session_history(count)`);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  // Sort by session count descending
+  const sortedCompanions = data
+    .map(companion => ({
+        ...companion,
+        sessionCount: companion.session_history ? companion.session_history[0].count : 0
+    }))
+    .sort((a, b) => b.sessionCount - a.sessionCount);
+
+  // Dedupe by name to ensure variety in popular list
+  const uniqueNames = new Set();
+  const uniquePopularCompanions = [];
+
+  for (const companion of sortedCompanions) {
+      if (!uniqueNames.has(companion.name)) {
+          uniqueNames.add(companion.name);
+          uniquePopularCompanions.push(companion);
+          if (uniquePopularCompanions.length >= limit) break;
+      }
+  }
+
+  return uniquePopularCompanions;
 };
 
 export const getUserSessionHistory = async (userId: string, limit = 8, page = 1) => {
