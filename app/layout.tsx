@@ -20,8 +20,8 @@ const bricolage = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: "Lets Learn",
-  description: "Your Personalized Tutor",
+  title: "Guidy",
+  description: "Your Personalized AI Tutor",
   icons: {
     icon: '/icon.png',
   }
