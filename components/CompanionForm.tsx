@@ -16,6 +16,7 @@ import {
 import {Input} from '@/components/ui/input'
 import {Textarea} from '@/components/ui/textarea'
 import { Button } from "./ui/button";
+import LaunchButton from "./LaunchButton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { subjects } from "@/constants";
 import { createCompanion } from "@/lib/actions/companion.actions";
@@ -189,7 +190,7 @@ const CompanionForm = () => {
         </FormItem>
       )}
     />
-    <Button type="submit" className="w-full cursor-pointer">Build your companion</Button>
+    <LaunchButton type="submit" className="w-full md:w-auto md:px-12 md:max-w-md mx-auto">Build your companion</LaunchButton>
   </form>
 </Form>
   )

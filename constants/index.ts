@@ -8,12 +8,12 @@ export const subjects = [
 ];
 
 export const subjectsColors = {
-  science: "#E5D0FF",
-  maths: "#FFDA6E",
-  language: "#BDE7FF",
-  coding: "#FFC8E4",
-  history: "#FFECC8",
-  economics: "#C8FFDF",
+  science: "linear-gradient(135deg, #f7fee7 0%, #fed6e3 100%)", // Soft Teal to Pink
+  maths: "linear-gradient(135deg, #f0f9ff 0%, #c7d2fe 100%)", // Lavender to Blue
+  language: "linear-gradient(135deg, #f5f7fa 0%,\ #f0abfc 100%)", // Misty Cloud
+  coding: "linear-gradient(135deg, #f5f7fa 0%, #94a3b8 100%)", // Pink Vivid
+  history: "linear-gradient(135deg, #fffbeb 0%, #fed7aa 100%)", // Desert Sand
+  economics: "linear-gradient(135deg, #dcfce7 0%, #fecdd3 100%)", // Mint to Blue
 };
 
 export const voices = {

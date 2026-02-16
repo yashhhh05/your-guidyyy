@@ -22,6 +22,10 @@ export const createCompanion = async(formData : CreateCompanion)=>{
     if(error  || !data){
         throw new Error(error?.message || "Failed to create a companion");
     }
+
+    revalidatePath("/companion");
+    revalidatePath("/my-journey");
+    
     return data[0]; //return newly created companion
 }
 
@@ -29,7 +33,7 @@ export const createCompanion = async(formData : CreateCompanion)=>{
 export const getAllCompanions = async({limit=10, page=1, subject, topic}: GetAllCompanions) => {
     const supabase = createSupabaseClient();
 
-    let query = supabase.from("companions").select();
+    let query = supabase.from("companions").select("*", { count: "exact" });
 
     if (subject && topic) {
   query = query
@@ -51,14 +55,14 @@ export const getAllCompanions = async({limit=10, page=1, subject, topic}: GetAll
     //means if page is 1 then range is 0-8 if page is 2 then range is 9-18
     
     //once we havev query we can fetch data form db based on that query
-    const {data : companions, error} = await query;
+    const {data : companions, error, count} = await query;
 
     if(error){
         throw new Error(error.message);
     }
     
     //companions is the new name of data
-    return companions;
+    return { data: companions, count: count ?? 0 };
 }
 
 //to fetch single companion by id
@@ -279,7 +283,7 @@ export const newCompanionPermissions = async () => {
 
   if (error) throw new Error(error.message);
 
-  return count < limit;
+  return (count ?? 0) < limit;
 };
 
 

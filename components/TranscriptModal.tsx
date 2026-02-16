@@ -33,9 +33,20 @@ export const TranscriptModal = ({ companionId, name }: TranscriptModalProps) => 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
-          <History className="w-5 h-5" />
-        </Button>
+        <button
+            className="overflow-x-visible relative w-10 h-10 overflow-y-clip group text-center cursor-pointer mr-1"
+        >
+            <div
+                className="flex justify-center items-center w-10 h-10 rounded-full bg-[#009087] transition-all duration-300 absolute top-0 group-hover:scale-[.60] group-hover:origin-top text-white"
+            >
+                <History className="w-5 h-5" />
+            </div>
+            <div
+                className="absolute font-bold -bottom-10 left-1/2 text-xs text-center text-black whitespace-nowrap transition-all duration-300 transform -translate-x-1/2 group-hover:bottom-0"
+            >
+                History
+            </div>
+        </button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl h-[80vh] flex flex-col">
         <DialogHeader>

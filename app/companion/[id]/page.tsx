@@ -34,7 +34,7 @@ const CompanionIdPage = async ({ params }: PageProps) => {
         <article className="flex rounded-border justify-between p-6 max-md:flex-col">
           <div className="flex items-center gap-2">
             <div className="size-[72px] flex items-center rounded-lg justify-center max-md:hidden"
-            style={{backgroundColor : getSubjectColor(companion.subject)}}
+            style={{background : getSubjectColor(companion.subject)}}
             >
               <Image src={`/icons/${companion.subject}.svg`} alt={companion.subject} width={35} height={35}/>
             </div>

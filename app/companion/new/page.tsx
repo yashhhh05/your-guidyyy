@@ -7,6 +7,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import React from 'react'
+import { Badge } from "@/components/ui/badge"
+import LaunchButton from '@/components/LaunchButton';
 
 const page = async() => {
 
@@ -27,12 +29,14 @@ const canCreateCompanion = await newCompanionPermissions();
       </article>:
       <article className='companion-limit'>
         <Image src="/images/limit.svg" alt="Companion limit reached" width={160} height={230}/>
-        <div className='cta-badge'>
+        <Badge variant="secondary" className="bg-cta-gold text-black hover:bg-cta-gold/90 border-0 rounded-full px-3 py-1.5 text-center">
           Upgrade your plan to create more companions
-        </div>
-        <h1>Ypu've Reached Your Limit</h1>
-        <p>Ypu've reached your companion limit. Upgrade your plan to create more companions and premium features</p>
-        <Link href="/subscription" className='btn-primary w-full justify-center'>Upgrade Plan</Link>
+        </Badge>
+        <h1>You've Reached Your Limit</h1>
+        <p>You've reached your companion limit. Upgrade your plan to create more companions and premium features</p>
+        <Link href="/subscription" className='w-full'>
+            <LaunchButton>Upgrade Plan</LaunchButton>
+        </Link>
       </article>
       }
     </main>

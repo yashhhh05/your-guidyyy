@@ -4,6 +4,7 @@ import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils';
+import NavButton from './NavButton';
 {/*array of different objects we wanna map on */} 
 const navItems = [{label : "Home", href : "/"},
                 {label : "Companions",     href : "/companion"}, 
@@ -16,9 +17,13 @@ const NavItems = () => {
   return (
     <nav className='flex items-center gap-4'>
        {navItems.map((item) => (
-        <Link key={item.href} href={item.href} className={cn(pathname === item.href && 'text-primary font-semibold')}>
+        <NavButton 
+            key={item.href} 
+            href={item.href} 
+            active={pathname === item.href}
+        >
             {item.label}
-        </Link>
+        </NavButton>
        ))}
     </nav>
   )

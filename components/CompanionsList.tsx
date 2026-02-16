@@ -75,7 +75,7 @@ const CompanionsList = ({title, companions, classNames, page = 1, allowPaginatio
                         <Link href={`/companion/${id}`}>
                             <div className="flex items-center gap-2">
                                 <div className="flex items-center justify-center size-[72px] rounded-lg max-sm:hidden" 
-                                    style={{backgroundColor : getSubjectColor(subject)}}>
+                                    style={{background : getSubjectColor(subject)}}>
                                     <Image src={`/icons/${subject}.svg`} 
                                                 alt={subject} 
                                                 height={35} width={35}>
@@ -95,7 +95,7 @@ const CompanionsList = ({title, companions, classNames, page = 1, allowPaginatio
                         </div>
 
                         <div className="flex items-center rounded-lg justify-center w-fit md:hidden p-2"
-                        style={{backgroundColor : getSubjectColor(subject)}}>
+                        style={{background : getSubjectColor(subject)}}>
                             <Image src={`/icons/${subject}.svg`}
                             alt={subject}
                             height={18} width={18}>

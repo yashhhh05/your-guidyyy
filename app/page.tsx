@@ -1,7 +1,7 @@
 import React from 'react'
 import { Button } from '@/components/ui/button' 
 import CompanionCard from '@/components/CompanionCard'
-import CompanionsList from '@/components/CompanionsList'
+import TrendingCompanions from '@/components/TrendingCompanions'
 import CTA from '@/components/CTA'
 import { currentUser } from '@clerk/nextjs/server'
 import { getAllCompanions, getBookmarkedCompanionIds, getPopularCompanions, getRecentSession, getUserSessionHistory } from '@/lib/actions/companion.actions'
@@ -15,10 +15,12 @@ interface SearchParams {
   }>
 }
 
+import { PageWrapper } from '@/components/PageWrapper'
+
 const Page = async ({ searchParams }: SearchParams) => {
   const { subject, page } = await searchParams;
   const pageNumber = page ? parseInt(page) : 1;
-  const recentSessionssCompanions = await getRecentSession(8, pageNumber);
+  const recentSessionssCompanions = await getRecentSession(6, pageNumber);
 
   const companions = await getPopularCompanions({
     limit: 3
@@ -29,6 +31,7 @@ const Page = async ({ searchParams }: SearchParams) => {
 
   return (
     <main className='pt-3'>
+      <PageWrapper className='flex flex-col gap-8 w-full'>
       <h1>Popular companions</h1>
       
       <section className="home-section">
@@ -45,17 +48,13 @@ const Page = async ({ searchParams }: SearchParams) => {
         )}
       </section>
 
-      <section className="home-section">
-        <CompanionsList 
-        title="Trending Companions"
-        companions={recentSessionssCompanions}
-        classNames="w-2/3 max-lg:w-full"
-        page={pageNumber}
-        allowPagination={true}
+      <section className="home-section w-full">
+        <TrendingCompanions 
+          companions={recentSessionssCompanions.slice(0, 6)}
         />
         <CTA/>
       </section>
-
+      </PageWrapper>
     </main>
   )
 } 
