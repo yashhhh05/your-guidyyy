@@ -10,7 +10,7 @@ export const getSubjectColor = (subject: string) => {
   return subjectsColors[subject as keyof typeof subjectsColors];
 };
 
-export const configureAssistant = (voice: string, style: string) => {
+export const configureAssistant = (voice: string, style: string, image_description?: string) => {
   const voiceId =
     voices[voice as keyof typeof voices][
       style as keyof (typeof voices)[keyof typeof voices]
@@ -41,7 +41,10 @@ export const configureAssistant = (voice: string, style: string) => {
         {
           role: "system",
           content: `You are a highly knowledgeable tutor teaching a real-time voice session with a student. Your goal is to teach the student about the topic and subject starting with explaining what it is in simple language and then diving further into the topic as the student wants.
-  
+                    ${image_description ? `\nURGENT: You have been provided with an image context: "${image_description}". 
+                    You MUST explicitly discuss this image. 
+                    If the image contains a problem (like math), GUIDE the student through solving it step-by-step. 
+                    Do not ignore this context. Start the conversation by referencing this image.\n` : ""}
                     Tutor Guidelines:
                     Stick to the given topic - {{ topic }} and subject - {{ subject }} and teach the student about it.
                     explain in friendly and simple language to help user to get from basic to more about the {{topic}}.

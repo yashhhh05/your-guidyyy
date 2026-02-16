@@ -26,7 +26,7 @@ function Button({
       data-variant={variant}
       data-size={size}
       className={cn(buttonVariants({ variant, size, className }))}
-      whileTap={{ scale: 0.95 }}
+      {...(!asChild && { whileTap: { scale: 0.95 } })}
       {...props}
     />
   )

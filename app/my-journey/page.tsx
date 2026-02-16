@@ -1,10 +1,14 @@
 
 import CompanionsList from '@/components/CompanionsList';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { getBookmarkedCompanions, getUserCompanions, getUserSessionHistory } from '@/lib/actions/companion.actions';
+import { getBookmarkedCompanions, getUserCompanions, getUserPrivateCompanions, getUserSessionHistory } from '@/lib/actions/companion.actions';
 import { currentUser } from '@clerk/nextjs/server';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
+import LaunchButton from '@/components/LaunchButton';
+import PrivateCompanionCard from '@/components/PrivateCompanionCard';
+import { ListPagination } from '@/components/ListPagination';
 
 
 interface SearchParams {
@@ -14,7 +18,7 @@ interface SearchParams {
 }
 
 const MyJourneyPage = async ({ searchParams }: SearchParams) => {
-      const { page } = await searchParams;
+const { page } = await searchParams;
       const pageNumber = page ? parseInt(page) : 1;
       const user = await currentUser();
       if(!user){
@@ -22,12 +26,20 @@ const MyJourneyPage = async ({ searchParams }: SearchParams) => {
       }
 
       const companions = await getUserCompanions(user.id, 8, pageNumber); //gets how many companions user has created
+      const privateCompanions = await getUserPrivateCompanions(user.id, 3, pageNumber); // Fetch private companions with limit 3
+      console.log("--- Debug: Private Companions Data ---");
+      console.log(JSON.stringify(privateCompanions, null, 2));
+
+      // Pagination Logic for Private Companions
+      const displayPrivateCompanions = privateCompanions.slice(0, 3);
+      const hasNextPagePrivate = privateCompanions.length > 3;
+
       const sessionHistory = await getUserSessionHistory(user.id, 8, pageNumber); //gets how many sessions user has done
       const bookmarkedCompanions = await getBookmarkedCompanions(user.id, 8, pageNumber);
 
 
   return (
-    <main className='min-lg:w-3/4'>
+    <main className='lg:w-3/4'>
       <section className='flex justify-between gap-4 max-sm:flex-col items-center'>
         <div className='flex justify-between gap-4 max-sm:flex-col items-center'>
           <Image src={user.imageUrl} alt="User" width={110} height={110} className='rounded-lg'/>
@@ -50,14 +62,56 @@ const MyJourneyPage = async ({ searchParams }: SearchParams) => {
            <div className='border border-black rounded-lg p-3 gap-2 flex flex-col h-fit shadow-lg'>
               <div className='flex gap-2 items-center'>
                   <Image src="/icons/cap.svg" alt="cap" width={22} height={22}/>
-                  <p className='text-2xl font-bold'>{companions.length}</p>
+                  <p className='text-2xl font-bold'>{companions.length + privateCompanions.length}</p>
               </div>
               <div >Companions created</div>
           </div>
       </section>
+      
+      <section className="flex justify-start my-4 max-sm:justify-center">
+        <Link href="/companion/new?type=private">
+            <LaunchButton className="bg-white text-black  border-black shadow-xl">
+                Create Private Companion
+            </LaunchButton>
+        </Link>
+      </section>
 
       <Accordion
-        type="multiple">
+        type="multiple"
+        defaultValue={["private"]} 
+      >
+        {/* Private Companions Section */}
+        <AccordionItem value="private">
+             <AccordionTrigger className="text-2xl font-bold">
+            My Private Companions {`(${displayPrivateCompanions.length})`}
+          </AccordionTrigger>
+          <AccordionContent>
+                {displayPrivateCompanions.length > 0 ? (
+                    <>
+                    <div className="flex flex-wrap justify-center gap-8 p-4">
+                        {displayPrivateCompanions.map((companion: any) => (
+                            <div key={companion.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <PrivateCompanionCard
+                                    id={companion.id}
+                                    name={companion.name}
+                                    subject={companion.subject}
+                                    topic={companion.topic}
+                                    image_url={companion.image_url} // Pass image url
+                                />
+                            </div>
+                        ))}
+                    </div>
+                     <div className="mt-4">
+                        <ListPagination page={pageNumber} hasNextPage={hasNextPagePrivate} />
+                    </div>
+                    </>
+                ) : (
+                    <div className="text-center p-8 text-muted-foreground">
+                        You haven't created any private companions yet.
+                    </div>
+                )}
+          </AccordionContent>
+        </AccordionItem>
 
           <AccordionItem value="bookmarks">
           <AccordionTrigger className="text-2xl font-bold">
@@ -89,7 +143,7 @@ const MyJourneyPage = async ({ searchParams }: SearchParams) => {
 
         <AccordionItem value='companions'>
             <AccordionTrigger className='text-2xl font-bold'>
-                My Companions {`(${companions.length})`}
+                My Public Companions {`(${companions.length})`}
             </AccordionTrigger>
             <AccordionContent>
               <CompanionsList 

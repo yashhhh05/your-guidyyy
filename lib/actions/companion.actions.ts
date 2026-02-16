@@ -33,7 +33,7 @@ export const createCompanion = async(formData : CreateCompanion)=>{
 export const getAllCompanions = async({limit=10, page=1, subject, topic}: GetAllCompanions) => {
     const supabase = createSupabaseClient();
 
-    let query = supabase.from("companions").select("*", { count: "exact" });
+    let query = supabase.from("companions").select("*", { count: "exact" }).eq("private", false); // Filter out private companions
 
     if (subject && topic) {
   query = query
@@ -233,6 +233,37 @@ export const getUserCompanions = async(userId : string, limit=8, page=1)=>{
     const {data, error} = await supabase.from("companions")
     .select()
     .eq("author", userId) //only get data when user_id matches
+    .limit(limit * page * 5);
+
+    if(error){
+        throw new Error(error.message);
+    }
+    
+    // Filter for unique companions (safety check)
+    const uniqueCompanionIds = new Set();
+    const uniqueCompanions = [];
+
+    for (const item of data) {
+        if (!uniqueCompanionIds.has(item.id)) {
+            uniqueCompanionIds.add(item.id);
+            uniqueCompanions.push(item);
+        }
+    }
+
+    // Pagination
+    const start = (page - 1) * limit;
+    const end = start + limit + 1; // Fetch one extra to check for next page
+
+    return uniqueCompanions.slice(start, end);
+}
+
+//getting private companions user has created
+export const getUserPrivateCompanions = async(userId : string, limit=6, page=1)=>{
+    const supabase = createSupabaseClient();
+    const {data, error} = await supabase.from("companions")
+    .select()
+    .eq("author", userId) 
+    .eq("private", true)
     .limit(limit * page * 5);
 
     if(error){

@@ -3,6 +3,7 @@
 import { maxLength, minLength, z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
+import { useEffect, useState } from "react";
 
 import {
   Form,
@@ -21,6 +22,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { subjects } from "@/constants";
 import { createCompanion } from "@/lib/actions/companion.actions";
 import { redirect } from "next/navigation";
+import { UploadButton } from "@/utils/uploadthing";
+import { analyzeImage } from "@/lib/actions/image.actions";
+import { Loader2 } from "lucide-react";
+
+interface CompanionFormProps {
+  type?: string;
+}
 
 const formSchema = z.object({
     name : z.string().min(1,{message:" Companion name is required"}),
@@ -28,14 +36,21 @@ const formSchema = z.object({
     topic : z.string().min(1,{message:" Topic name is required"}),
     voice : z.string().min(1,{message:" Voice name is required"}),
     style : z.string().min(1,{message:" Style name is required"}),
-    duration : z.coerce.number().min(1,{message:" Duration is required"})
+    duration : z.coerce.number().min(5).max(60),
+    private: z.boolean().default(false),
+    image_description: z.string().optional(),
+    image_url: z.string().optional(),
 })
 
-const CompanionForm = () => {
+const CompanionForm = ({ type }: CompanionFormProps) => {
+    const isPrivate = type === 'private';
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [analysisResult, setAnalysisResult] = useState("");
+    const [uploadedImageUrl, setUploadedImageUrl] = useState("");
 
     //define form
      const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as any,
     defaultValues: {
       name:"",
       subject:"",
@@ -43,12 +58,33 @@ const CompanionForm = () => {
       voice:"",
       style:"",
       duration:15,
+      private: isPrivate,
+      image_description: "",
+      image_url: "",
     },
   })
 
+  // Reset image-related state when component mounts to prevent stale data
+  useEffect(() => {
+    setUploadedImageUrl("");
+    setAnalysisResult("");
+    form.setValue("image_description", "");
+    form.setValue("image_url", "");
+  }, []); // Empty dependency array = runs once on mount
+
   //Define a submit handler - what happens on submit the form
-  const onSubmit = async(values: z.infer<typeof formSchema>): void => {
+  const onSubmit = async(values: z.infer<typeof formSchema>) => {
     //pass values to server actions
+    console.log(values);
+    
+    // Ensure image description is in values if analyzed
+    if (analysisResult) {
+        values.image_description = analysisResult;
+    }
+    if (uploadedImageUrl) {
+        values.image_url = uploadedImageUrl;
+    }
+
     const companion = await createCompanion(values);
 
     //if companion is created redirect to companion page
@@ -101,7 +137,7 @@ const CompanionForm = () => {
                     >
                    {sub}
                     </SelectItem>
-                 ))}
+                ))}
             </SelectContent>
           </Select>
           <FormMessage />
@@ -121,6 +157,82 @@ const CompanionForm = () => {
         </FormItem>
       )}
     />
+
+    {isPrivate && (
+        <FormItem>
+            <FormLabel>Upload Context Image (Optional)</FormLabel>
+            <FormControl>
+                <div className="flex flex-col items-center justify-center w-full gap-4 border-2 border-dashed border-gray-300 rounded-lg p-6">
+                    {!uploadedImageUrl ? (
+                         <div className="w-full h-full flex flex-col items-center">
+                            <UploadButton
+                                endpoint="imageUploader"
+                                onClientUploadComplete={async (res) => {
+                                    // Do something with the response
+                                    console.log("Files: ", res);
+                                    if(res && res[0]) {
+                                        const url = res[0].url;
+                                        setUploadedImageUrl(url);
+                                        form.setValue("image_url", url); // Save URL to form
+                                        setIsAnalyzing(true);
+                                        try {
+                                            const description = await analyzeImage(url);
+                                            setAnalysisResult(description);
+                                            form.setValue("image_description", description);
+                                            console.log("Analysis:", description);
+                                        } catch (error) {
+                                            console.error("Analysis failed", error);
+                                        } finally {
+                                            setIsAnalyzing(false);
+                                        }
+                                    }
+                                }}
+                                onUploadError={(error: Error) => {
+                                    // Do something with the error.
+                                    alert(`ERROR! ${error.message}`);
+                                }}
+                            />
+                            <p className="text-xs text-gray-500 mt-2">SVG, PNG, JPG or GIF (MAX. 4MB)</p>
+                         </div>
+                    ) : (
+                        <div className="flex flex-col items-center w-full">
+                            <p className="text-green-600 font-semibold mb-2">Image Uploaded!</p>
+                            {/* Optionally show preview */}
+                            {isAnalyzing ? (
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Loader2 className="animate-spin w-4 h-4"/> Analyzing image...
+                                </div>
+                            ) : (
+                                <div className="w-full">
+                                    <p className="text-sm font-semibold mb-1">AI Analysis:</p>
+                                    <div className="bg-muted p-3 rounded-md text-sm max-h-32 overflow-y-auto">
+                                        {analysisResult || "No description generated."}
+                                    </div>
+                                </div>
+                            )}
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="mt-2 text-red-500 hover:text-red-700"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    setUploadedImageUrl("");
+                                    setAnalysisResult("");
+                                    form.setValue("image_description", "");
+                                }}
+                            >
+                                Remove Image
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            </FormControl>
+            <FormDescription>
+                Upload an image to provide context for your companion (e.g., a math problem). The AI will analyze it automatically.
+            </FormDescription>
+        </FormItem>
+    )}
+
     <FormField
       control={form.control}
       name="voice"
@@ -149,7 +261,7 @@ const CompanionForm = () => {
         </FormItem>
       )}
     />
-   <FormField
+    <FormField
       control={form.control}
       name="style"
       render={({ field }) => (

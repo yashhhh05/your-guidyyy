@@ -10,7 +10,14 @@ import React from 'react'
 import { Badge } from "@/components/ui/badge"
 import LaunchButton from '@/components/LaunchButton';
 
-const page = async() => {
+interface SearchParams {
+  searchParams: Promise<{
+    type?: string;
+  }>
+}
+
+const page = async({ searchParams }: SearchParams) => {
+  const { type } = await searchParams;
 
   //this ensures if no userid means not signed in and cant build companion
 const {userId} = await auth();
@@ -21,11 +28,11 @@ if(!userId){
 const canCreateCompanion = await newCompanionPermissions();
   
   return (
-    <main className='min-lg:w-1/3 min-md:w-2/3  items-center justify-center'>
+    <main className='lg:w-1/3 md:w-2/3  items-center justify-center'>
 
       { canCreateCompanion? <article className='w-full gap-4 flex flex-col'>
         <h1>New Companion Builder</h1>
-        <CompanionForm/>
+        <CompanionForm type={type}/>
       </article>:
       <article className='companion-limit'>
         <Image src="/images/limit.svg" alt="Companion limit reached" width={160} height={230}/>
