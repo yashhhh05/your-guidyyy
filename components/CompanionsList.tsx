@@ -16,6 +16,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { DeleteDialog } from "./DeleteDialog";
 import { ListPagination } from "./ListPagination";
+import { SessionDetailsModal } from "./Study/SessionDetailsModal";
 
 interface CompanionListProps {
     title: string;
@@ -63,13 +64,11 @@ const CompanionsList = ({title, companions, classNames, page = 1, allowPaginatio
                 <TableHead className="text-lg w-2/3">Lessons</TableHead>
                 <TableHead className="text-lg">Subject</TableHead>
                 <TableHead className="text-lg text-right">Duration</TableHead>
-                {type && <TableHead className="text-lg text-right">
-                    <span className="bg-red-200 rounded-lg px-2 py-1">Delete</span>
-                </TableHead>}
+                <TableHead className="text-lg text-center">Actions</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {displayCompanions?.map(({id, subject,name,topic, duration}, index) => (
+                {displayCompanions?.map(({id, subject,name,topic, duration, last_session_id}, index) => (
                 <TableRow key={`${id}-${index}`}>
                     <TableCell>
                         <Link href={`/companion/${id}`}>
@@ -83,7 +82,7 @@ const CompanionsList = ({title, companions, classNames, page = 1, allowPaginatio
                                 </div>
                                 <div className="flex flex-col gap-2">
                                     <p className="font-bold text-2xl">{name}</p>
-                                    <p className="text-lg ">{topic}</p>
+                                    <p className="text-lg text-muted-foreground line-clamp-1">{topic}</p>
                                 </div>
                             </div>
                         </Link>
@@ -106,36 +105,50 @@ const CompanionsList = ({title, companions, classNames, page = 1, allowPaginatio
 
                     <TableCell className="text-right">
                     <div className="flex items-center gap-2 w-full justify-end">
-                        <p className="text-lg">{duration}{" "}
-                        <span className="max-md:hidden">mins</span>
+                        <p className="text-lg font-medium">{duration}{" "}
+                        <span className="max-md:hidden text-muted-foreground font-normal">mins</span>
                         </p>
-                        <Image src="/icons/clock.svg" alt="minutes" height={14} width={14} className="md:hidden"/>
+                        <Image src="/icons/clock.svg" alt="minutes" height={14} width={14} className="md:hidden opacity-50"/>
                     </div>
                     </TableCell> 
 
-                    {type && (
-                        <TableCell className="text-right">
-                            <div onClick={(e) => e.stopPropagation()}>
-                            <DeleteDialog 
-                                onConfirm={() => handleDelete(id)}
-                                description={getDeleteDescription()}
-                            >
-                                <button 
-                                    className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-                                    title="Delete"
+                    <TableCell className="text-right px-3">
+                        <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                            {type === 'session' && (
+                                <SessionDetailsModal 
+                                    sessionId={last_session_id || id} 
+                                    companionName={name}
+                                    trigger={
+                                        <Button variant="outline" size="sm" className="gap-2 h-9">
+                                            <Image src="/study.png" alt="study" width={16} height={16} className="opacity-70" />
+                                        </Button>
+                                    } 
+                                />
+                            )}
+                            
+                            {type && (
+                                <DeleteDialog 
+                                    onConfirm={() => handleDelete(id)}
+                                    description={getDeleteDescription()}
                                 >
-                                    <Image 
-                                        src="/icons/544161-removebg-preview.png" 
-                                        alt="delete" 
-                                        width={20} 
-                                        height={20}
-                                        className="opacity-70 hover:opacity-100"
-                                    />
-                                </button>
-                            </DeleteDialog>
-                            </div>
-                        </TableCell>
-                    )}
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon"
+                                        className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                        title="Delete"
+                                    >
+                                        <Image 
+                                            src="/icons/544161-removebg-preview.png" 
+                                            alt="delete" 
+                                            width={16} 
+                                            height={16}
+                                            className="opacity-70 group-hover:opacity-100 invert-0 dark:invert"
+                                        />
+                                    </Button>
+                                </DeleteDialog>
+                            )}
+                        </div>
+                    </TableCell>
                 
                 </TableRow>
                 ))}

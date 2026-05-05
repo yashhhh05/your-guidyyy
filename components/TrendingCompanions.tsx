@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import BookCard from "./BookCard";
+import MobileBookCard from "./MobileBookCard";
 
 interface Companion {
   id: string;
@@ -35,7 +36,12 @@ const TrendingCompanions = ({ companions }: TrendingCompanionsProps) => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: index * 0.1, duration: 0.4 }}
           >
-             <BookCard {...companion} />
+             <div className="hidden md:block">
+               <BookCard {...companion} />
+             </div>
+             <div className="block md:hidden">
+               <MobileBookCard {...companion} />
+             </div>
           </motion.div>
         ))}
       </div>

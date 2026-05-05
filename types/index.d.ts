@@ -27,6 +27,7 @@ type Companion = Models.DocumentList<Models.Document> & {
   private: boolean;
   image_description?: string;
   image_url?: string;
+  last_session_id?: string;
 };
 
 interface CreateCompanion {

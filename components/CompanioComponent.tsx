@@ -23,6 +23,8 @@ const CompanioComponent = ({companionId, userName, userImage,name, topic, subjec
     const lottieRef = useRef<LottieRefCurrentProps>(null);
     const [messages, setMessages] = useState<SavedMessage[]>([]);
     const messagesRef = useRef<SavedMessage[]>([]); // Ref to keep track of messages for event listeners
+    const [isWorkspaceOpen, setIsWorkspaceOpen] = useState(false);
+    const [textInput, setTextInput] = useState("");
 
 
     const toggleCall = ()=>{
@@ -31,6 +33,33 @@ const CompanioComponent = ({companionId, userName, userImage,name, topic, subjec
         vapi.setMuted(!isMuted);
         setIsMuted(!isMuted);
     }
+
+    const handleSendMessage = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!textInput.trim() || callStatus !== CallStatus.ACTIVE) return;
+
+        vapi.send({
+            type: "add-message",
+            message: {
+                role: "user",
+                content: textInput,
+            }
+        });
+
+        const newMessage = {
+            id: crypto.randomUUID(),
+            role: "user",
+            content: textInput,
+        };
+
+        setMessages((prev) => {
+            const updated = [newMessage, ...prev];
+            messagesRef.current = updated; // Update ref
+            return updated;
+        });
+
+        setTextInput("");
+    };
 
     const handleCall = async()=>{
         setCallStatus(CallStatus.CONNECTING);
@@ -111,9 +140,14 @@ const CompanioComponent = ({companionId, userName, userImage,name, topic, subjec
 
 
     return (
-    <section className='flex flex-col h-[70vh]'>
-        <section className='flex gap-8 max-sm:flex-col'>
-            <div className='companion-section'>
+    <section className='flex h-[70vh] gap-4 w-full'>
+        {/* Main Content Area */}
+        <section className={cn(
+            'flex flex-col transition-all duration-300 ease-in-out',
+            isWorkspaceOpen ? 'w-2/3 max-lg:w-1/2 max-sm:w-full' : 'w-full'
+        )}>
+            <section className='flex gap-8 max-sm:flex-col'>
+                <div className='companion-section'>
                 <div className='companion-avatar' style={{background : getSubjectColor(subject)}}>
                     <div className={cn("absolute transition-opacity duration-1000",
                         callStatus===CallStatus.CONNECTING ? "animate-pulse" : "",
@@ -146,10 +180,21 @@ const CompanioComponent = ({companionId, userName, userImage,name, topic, subjec
                 <p className='font-bold text-2xl'>
                     {userName}
                 </p>
-                <button className='btn-mic' onClick={toggleCall}  aria-disabled={callStatus!== CallStatus.ACTIVE} disabled={callStatus!== CallStatus.ACTIVE}>
-                        <Image src={isMuted? "/icons/mic-off.svg" : "/icons/mic-on.svg"} alt="mic" width={36} height={36}/>
-                        <p className='max-sm:hidden'>{isMuted? "Unmute" : "Mute"}</p>
-                </button>
+                <div className='flex gap-2 max-sm:flex-col w-full justify-center'>
+                    <button className='btn-mic flex-1' onClick={toggleCall}  aria-disabled={callStatus!== CallStatus.ACTIVE} disabled={callStatus!== CallStatus.ACTIVE}>
+                            <Image src={isMuted? "/icons/mic-off.svg" : "/icons/mic-on.svg"} alt="mic" width={36} height={36}/>
+                            <p className='max-sm:hidden'>{isMuted? "Unmute" : "Mute"}</p>
+                    </button>
+                    <button 
+                        className={cn(
+                            'btn-mic flex-1 !bg-transparent border transition-colors',
+                            isWorkspaceOpen ? 'border-[#009087] text-[#009087]' : 'border-gray-500 text-gray-500 hover:border-white hover:text-white'
+                        )} 
+                        onClick={() => setIsWorkspaceOpen(!isWorkspaceOpen)}
+                    >
+                        <p className='font-semibold'>{isWorkspaceOpen ? "Close Workspace" : "Open Workspace"}</p>
+                    </button>
+                </div>
                 {callStatus === CallStatus.INACTIVE && (
                  <button 
                  className='relative inline-block overflow-hidden z-1 w-full text-lg cursor-pointer rounded-lg bg-[#e8e8e8] border border-[#e8e8e8] shadow-[6px_6px_12px_#c5c5c5,-6px_-6px_12px_#ffffff] text-[#090909] py-[0.7em] px-[1.7em] transition-all duration-200 ease-in group hover:text-white hover:border-[#009087] active:text-[#666] active:shadow-[inset_4px_4px_12px_#c5c5c5,inset_-4px_-4px_12px_#ffffff]'
@@ -210,7 +255,52 @@ const CompanioComponent = ({companionId, userName, userImage,name, topic, subjec
                 })}
             </div>
         </section>
+        </section>
 
+        {/* Workspace Side Panel */}
+        {isWorkspaceOpen && (
+            <section className='w-1/3 max-lg:w-1/2 max-sm:hidden flex flex-col bg-white/5 border border-white/10 rounded-xl p-4 animate-in slide-in-from-right-8'>
+                <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
+                    <h3 className="font-bold text-xl flex items-center gap-2">
+                        <Image src="/icons/coding.svg" alt="workspace" width={24} height={24} className="invert" />
+                        Workspace
+                    </h3>
+                    <button onClick={() => setIsWorkspaceOpen(false)} className="text-gray-400 hover:text-white transition-colors">✕</button>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto no-scrollbar mb-4 flex flex-col">
+                    <div className="mt-auto">
+                        <p className="text-sm text-gray-400 mb-2">
+                            Type messages here to interact with the assistant via text. Your messages will also appear in the transcript below.
+                        </p>
+                    </div>
+                </div>
+                
+                <form onSubmit={handleSendMessage} className="flex flex-col gap-2 mt-auto">
+                    <textarea 
+                        value={textInput}
+                        onChange={(e) => setTextInput(e.target.value)}
+                        onKeyDown={(e) => {
+                            if(e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSendMessage(e as any);
+                            }
+                        }}
+                        placeholder={callStatus === CallStatus.ACTIVE ? "Type your message..." : "Start session to type..."}
+                        disabled={callStatus !== CallStatus.ACTIVE}
+                        className="w-full bg-black/20 border border-white/10 rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-[#009087] transition-all text-white placeholder:text-gray-500"
+                        rows={4}
+                    />
+                    <button 
+                        type="submit" 
+                        disabled={callStatus !== CallStatus.ACTIVE || !textInput.trim()}
+                        className="bg-[#009087] hover:bg-[#007a72] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                    >
+                        Send
+                    </button>
+                </form>
+            </section>
+        )}
     </section>
     
   )

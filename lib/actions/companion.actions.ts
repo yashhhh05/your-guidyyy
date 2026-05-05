@@ -95,12 +95,12 @@ export const addToSessionHistory = async(companionId : string, messages: SavedMe
         companion_id : companionId,
         user_id : userId,
         transcript: messages // Adding transcript to the insert
-    })
+    }).select();
 
     if(error){
         throw new Error(error.message);
     }
-    return data;
+    return data[0];
 }
 
 export const getCompanionSessions = async (companionId: string) => {
@@ -199,7 +199,7 @@ export const getUserSessionHistory = async (userId: string, limit = 8, page = 1)
   const supabase = createSupabaseClient();
   const { data, error } = await supabase
     .from("session_history")
-    .select(`companion_id, companions(*)`)
+    .select(`id, companion_id, companions(*)`)
     .eq("user_id", userId) //only get data when user_id matches
     .order("created_at", { ascending: false })
     .limit(limit * page * 5); // Fetch more to ensure we have enough unique ones
@@ -216,7 +216,7 @@ export const getUserSessionHistory = async (userId: string, limit = 8, page = 1)
     // Check if companion exists and hasn't been added yet
     if (item.companions && !uniqueCompanionIds.has(item.companion_id)) {
       uniqueCompanionIds.add(item.companion_id);
-      uniqueCompanions.push(item.companions);
+      uniqueCompanions.push({ ...item.companions, last_session_id: item.id });
     }
   }
 
@@ -430,6 +430,42 @@ export const deleteCompanion = async (companionId: string) => {
   }
 
   const supabase = createSupabaseClient();
+  
+  // First, verify the user is the author
+  const { data: companion, error: fetchError } = await supabase
+    .from("companions")
+    .select("author")
+    .eq("id", companionId)
+    .single();
+    
+  if (fetchError || !companion) {
+    throw new Error("Companion not found or error fetching companion");
+  }
+    
+  if (companion.author !== user.id) {
+    throw new Error("Unauthorized: Only the author can delete this companion");
+  }
+
+  // Delete bookmarks related to this companion
+  const { error: bookmarkError } = await supabase
+    .from("bookmark")
+    .delete()
+    .eq("companion_id", companionId);
+
+  if (bookmarkError) {
+     console.error("Error deleting bookmarks for companion:", bookmarkError);
+  }
+
+  // Delete session history related to this companion
+  const { error: sessionError } = await supabase
+    .from("session_history")
+    .delete()
+    .eq("companion_id", companionId);
+
+  if (sessionError) {
+     console.error("Error deleting session history for companion:", sessionError);
+  }
+
   const { error } = await supabase
     .from("companions")
     .delete()
