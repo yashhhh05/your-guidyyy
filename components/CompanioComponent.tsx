@@ -139,14 +139,58 @@ const CompanioComponent = ({companionId, userName, userImage,name, topic, subjec
     },[])
 
 
+    const workspaceContent = (
+        <>
+            <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
+                <h3 className="font-bold text-xl flex items-center gap-2">
+                    <Image src="/icons/coding.svg" alt="workspace" width={24} height={24} className="invert" />
+                    Workspace
+                </h3>
+                <button onClick={() => setIsWorkspaceOpen(false)} className="text-gray-400 hover:text-white transition-colors">✕</button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto no-scrollbar mb-4 flex flex-col">
+                <div className="mt-auto">
+                    <p className="text-sm text-gray-400 mb-2">
+                        Type messages here to interact with the assistant via text. Your messages will also appear in the transcript below.
+                    </p>
+                </div>
+            </div>
+            
+            <form onSubmit={handleSendMessage} className="flex flex-col gap-2 mt-auto">
+                <textarea 
+                    value={textInput}
+                    onChange={(e) => setTextInput(e.target.value)}
+                    onKeyDown={(e) => {
+                        if(e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendMessage(e as any);
+                        }
+                    }}
+                    placeholder={callStatus === CallStatus.ACTIVE ? "Type your message..." : "Start session to type..."}
+                    disabled={callStatus !== CallStatus.ACTIVE}
+                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-[#009087] transition-all text-white placeholder:text-gray-500"
+                    rows={4}
+                />
+                <button 
+                    type="submit" 
+                    disabled={callStatus !== CallStatus.ACTIVE || !textInput.trim()}
+                    className="bg-[#009087] hover:bg-[#007a72] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                    Send
+                </button>
+            </form>
+        </>
+    );
+
     return (
-    <section className='flex h-[70vh] gap-4 w-full'>
+    <section className='flex max-sm:flex-col h-[70vh] max-sm:h-[85vh] gap-4 w-full'>
         {/* Main Content Area */}
         <section className={cn(
             'flex flex-col transition-all duration-300 ease-in-out',
-            isWorkspaceOpen ? 'w-2/3 max-lg:w-1/2 max-sm:w-full' : 'w-full'
+            isWorkspaceOpen ? 'w-2/3 max-lg:w-1/2 max-sm:w-full' : 'w-full h-full'
         )}>
-            <section className='flex gap-8 max-sm:flex-col'>
+            <section className='flex gap-8 max-sm:flex-col shrink-0'>
                 <div className='companion-section'>
                 <div className='companion-avatar' style={{background : getSubjectColor(subject)}}>
                     <div className={cn("absolute transition-opacity duration-1000",
@@ -231,76 +275,47 @@ const CompanioComponent = ({companionId, userName, userImage,name, topic, subjec
 
             </div>
 
-        </section>
-
-        <section className='transcript' >
-            <div className='transcript-message no-scrollbar' style={{fontFamily:"revert-layer"}}>
-                {messages.map((message: any)=> {
-                    if(message.role === "assistant"){
-                        return(
-                            <p key={message.id} className='max-sm:text-sm animate-in fade-in slide-in-from-top-5'>
-                            {name.split(" ")[0].replace(/[.,]/g, '')}
-                            : {message.content}
-                            </p>
-                        )
-                    }
-                    else {
-                        return(
-                           <p  key={message.id}
-                               className='max-sm:text-sm text-primary animate-in fade-in slide-in-from-top-5'>
-                               {userName}:{message.content}    
-                            </p>
-                        )
-                    }
-                })}
-            </div>
-        </section>
-        </section>
-
-        {/* Workspace Side Panel */}
-        {isWorkspaceOpen && (
-            <section className='w-1/3 max-lg:w-1/2 max-sm:hidden flex flex-col bg-white/5 border border-white/10 rounded-xl p-4 animate-in slide-in-from-right-8'>
-                <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
-                    <h3 className="font-bold text-xl flex items-center gap-2">
-                        <Image src="/icons/coding.svg" alt="workspace" width={24} height={24} className="invert" />
-                        Workspace
-                    </h3>
-                    <button onClick={() => setIsWorkspaceOpen(false)} className="text-gray-400 hover:text-white transition-colors">✕</button>
-                </div>
-                
-                <div className="flex-1 overflow-y-auto no-scrollbar mb-4 flex flex-col">
-                    <div className="mt-auto">
-                        <p className="text-sm text-gray-400 mb-2">
-                            Type messages here to interact with the assistant via text. Your messages will also appear in the transcript below.
-                        </p>
-                    </div>
-                </div>
-                
-                <form onSubmit={handleSendMessage} className="flex flex-col gap-2 mt-auto">
-                    <textarea 
-                        value={textInput}
-                        onChange={(e) => setTextInput(e.target.value)}
-                        onKeyDown={(e) => {
-                            if(e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                handleSendMessage(e as any);
-                            }
-                        }}
-                        placeholder={callStatus === CallStatus.ACTIVE ? "Type your message..." : "Start session to type..."}
-                        disabled={callStatus !== CallStatus.ACTIVE}
-                        className="w-full bg-black/20 border border-white/10 rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-[#009087] transition-all text-white placeholder:text-gray-500"
-                        rows={4}
-                    />
-                    <button 
-                        type="submit" 
-                        disabled={callStatus !== CallStatus.ACTIVE || !textInput.trim()}
-                        className="bg-[#009087] hover:bg-[#007a72] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
-                    >
-                        Send
-                    </button>
-                </form>
             </section>
-        )}
+
+            {/* Mobile Workspace Area (Smooth Transition) */}
+            <div className={cn(
+                "sm:hidden transition-all duration-500 ease-in-out overflow-hidden flex flex-col bg-white/5 border-white/10 rounded-xl",
+                isWorkspaceOpen ? "max-h-[350px] p-4 mt-4 opacity-100 border" : "max-h-0 p-0 mt-0 opacity-0 border-0"
+            )}>
+                {workspaceContent}
+            </div>
+
+            <section className='transcript flex-1 mt-4' >
+                <div className='transcript-message no-scrollbar' style={{fontFamily:"revert-layer"}}>
+                    {messages.map((message: any)=> {
+                        if(message.role === "assistant"){
+                            return(
+                                <p key={message.id} className='max-sm:text-sm animate-in fade-in slide-in-from-top-5'>
+                                {name.split(" ")[0].replace(/[.,]/g, '')}
+                                : {message.content}
+                                </p>
+                            )
+                        }
+                        else {
+                            return(
+                               <p  key={message.id}
+                                   className='max-sm:text-sm text-primary animate-in fade-in slide-in-from-top-5'>
+                                   {userName}:{message.content}    
+                                </p>
+                            )
+                        }
+                    })}
+                </div>
+            </section>
+        </section>
+
+        {/* Desktop Workspace Side Panel */}
+        <div className={cn(
+            "max-sm:hidden transition-all duration-500 ease-in-out overflow-hidden flex flex-col bg-white/5 border-white/10 rounded-xl",
+            isWorkspaceOpen ? "w-1/3 max-lg:w-1/2 p-4 opacity-100 border" : "w-0 p-0 opacity-0 border-none"
+        )}>
+            {isWorkspaceOpen && workspaceContent}
+        </div>
     </section>
     
   )
