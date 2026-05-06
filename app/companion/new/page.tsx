@@ -18,6 +18,7 @@ interface SearchParams {
 
 const page = async({ searchParams }: SearchParams) => {
   const { type } = await searchParams;
+  const isPrivate = type === 'private';
 
   //this ensures if no userid means not signed in and cant build companion
 const {userId} = await auth();
@@ -25,7 +26,7 @@ if(!userId){
     redirect("/sign-in");
 }
 
-const canCreateCompanion = await newCompanionPermissions();
+const canCreateCompanion = await newCompanionPermissions(isPrivate);
   
   return (
     <main className='lg:w-1/3 md:w-2/3  items-center justify-center'>

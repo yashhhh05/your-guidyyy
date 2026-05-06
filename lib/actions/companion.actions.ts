@@ -13,6 +13,11 @@ export const createCompanion = async(formData : CreateCompanion)=>{
     const {userId : author} = await auth(); //access to authenticate user
     const supabase = createSupabaseClient(); // access to database
 
+    const canCreate = await newCompanionPermissions(formData.private || false);
+    if (!canCreate) {
+        throw new Error("Companion limit reached for your current plan");
+    }
+
     //Insert data into database and then get it in data else error
     const{data, error} = await supabase.from("companions").insert({
         ...formData,
@@ -292,25 +297,29 @@ export const getUserPrivateCompanions = async(userId : string, limit=6, page=1)=
 // implementing new server function
 // that will check subscription plan and permissions
 
-export const newCompanionPermissions = async () => {
+export const newCompanionPermissions = async (isPrivate: boolean = false) => {
   const { userId, has } = await auth();
   const supabase = createSupabaseClient();
 
   // Define limits
-  let limit = 0;
-  if (has({ plan: "pro_companion" })) {
+  let publicLimit = 15;
+  let privateLimit = 8;
+
+  if (has({ plan: "core" })) {
     return true; // unlimited companions
-  } else if (has({ plan: "free_user" })) {
-    limit = 30;
-  } else if (has({ plan: "core" })) {
-    limit = 20;
+  } else if (has({ plan: "pro_companion" })) {
+    publicLimit = 20;
+    privateLimit = 15;
   }
+
+  const limit = isPrivate ? privateLimit : publicLimit;
 
   // Query with count only
   const { count, error } = await supabase
     .from("companions")
     .select("id", { count: "exact", head: true }) // head:true avoids fetching rows
-    .eq("author", userId);
+    .eq("author", userId)
+    .eq("private", isPrivate);
 
   if (error) throw new Error(error.message);
 

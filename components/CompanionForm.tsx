@@ -23,8 +23,8 @@ import { subjects } from "@/constants";
 import { createCompanion } from "@/lib/actions/companion.actions";
 import { redirect } from "next/navigation";
 import { UploadButton } from "@/utils/uploadthing";
-import { analyzeImage } from "@/lib/actions/image.actions";
-import { Loader2 } from "lucide-react";
+import { analyzeImage, canUploadImage } from "@/lib/actions/image.actions";
+import { Loader2, AlertTriangle } from "lucide-react";
 
 interface CompanionFormProps {
   type?: string;
@@ -47,6 +47,7 @@ const CompanionForm = ({ type }: CompanionFormProps) => {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisResult, setAnalysisResult] = useState("");
     const [uploadedImageUrl, setUploadedImageUrl] = useState("");
+    const [hasUploadLimitReached, setHasUploadLimitReached] = useState(false);
 
     //define form
      const form = useForm<z.infer<typeof formSchema>>({
@@ -70,7 +71,13 @@ const CompanionForm = ({ type }: CompanionFormProps) => {
     setAnalysisResult("");
     form.setValue("image_description", "");
     form.setValue("image_url", "");
-  }, []); // Empty dependency array = runs once on mount
+
+    if (isPrivate) {
+        canUploadImage().then(isAllowed => {
+            setHasUploadLimitReached(!isAllowed);
+        }).catch(console.error);
+    }
+  }, [isPrivate, form]); // Run on mount or when isPrivate changes
 
   //Define a submit handler - what happens on submit the form
   const onSubmit = async(values: z.infer<typeof formSchema>) => {
@@ -163,7 +170,13 @@ const CompanionForm = ({ type }: CompanionFormProps) => {
             <FormLabel>Upload Context Image (Optional)</FormLabel>
             <FormControl>
                 <div className="flex flex-col items-center justify-center w-full gap-4 border-2 border-dashed border-gray-300 rounded-lg p-6">
-                    {!uploadedImageUrl ? (
+                    {hasUploadLimitReached ? (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-center p-4">
+                             <AlertTriangle className="w-12 h-12 text-red-500 mb-4 opacity-80" />
+                             <p className="text-red-500 font-semibold mb-2">Daily Limit Reached</p>
+                             <p className="text-sm text-gray-500">You have reached your daily image upload limit for your plan. Please try again tomorrow, or proceed without an image context.</p>
+                         </div>
+                    ) : !uploadedImageUrl ? (
                          <div className="w-full h-full flex flex-col items-center">
                             <UploadButton
                                 endpoint="imageUploader"

@@ -88,4 +88,5 @@ interface CompanionComponentProps {
   voice: string;
   style: string;
   image_description?: string;
+  private?: boolean;
 }

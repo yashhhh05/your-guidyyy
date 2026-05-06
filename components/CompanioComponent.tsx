@@ -7,6 +7,9 @@ import Image from 'next/image';
 import React, { useEffect, useRef, useState } from 'react'
 import soundwaves from "@/constants/soundwaves.json"
 import { addToSessionHistory } from '@/lib/actions/companion.actions';
+import { UploadButton } from "@/utils/uploadthing";
+import { analyzeImage, canUploadImage } from "@/lib/actions/image.actions";
+import { Loader2, AlertTriangle } from "lucide-react";
 
 enum CallStatus {
     INACTIVE = "INACTIVE",
@@ -15,7 +18,7 @@ enum CallStatus {
     ACTIVE = "ACTIVE",
 }
 
-const CompanioComponent = ({companionId, userName, userImage,name, topic, subject, style, voice, image_description} : CompanionComponentProps) => {
+const CompanioComponent = ({companionId, userName, userImage,name, topic, subject, style, voice, image_description, private: isPrivate} : CompanionComponentProps) => {
   
     const[callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
     const[isUserSpeaking, setIsUserSpeaking] = useState(false);
@@ -25,6 +28,18 @@ const CompanioComponent = ({companionId, userName, userImage,name, topic, subjec
     const messagesRef = useRef<SavedMessage[]>([]); // Ref to keep track of messages for event listeners
     const [isWorkspaceOpen, setIsWorkspaceOpen] = useState(false);
     const [textInput, setTextInput] = useState("");
+    
+    // Image upload states
+    const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
+    const [imageUploadLimitReached, setImageUploadLimitReached] = useState(false);
+
+    useEffect(() => {
+        if (isPrivate) {
+            canUploadImage().then(isAllowed => {
+                setImageUploadLimitReached(!isAllowed);
+            }).catch(console.error);
+        }
+    }, [isPrivate]);
 
 
     const toggleCall = ()=>{
@@ -157,6 +172,84 @@ const CompanioComponent = ({companionId, userName, userImage,name, topic, subjec
                 </div>
             </div>
             
+            {isPrivate && callStatus === CallStatus.ACTIVE && (
+                <div className="mb-4">
+                    {imageUploadLimitReached ? (
+                        <div className="flex items-center gap-2 text-sm text-red-400 bg-red-400/10 p-2 rounded-lg border border-red-400/20">
+                            <AlertTriangle className="w-4 h-4" />
+                            <p>Daily limit of 5 image uploads reached.</p>
+                        </div>
+                    ) : isAnalyzingImage ? (
+                        <div className="flex items-center justify-center gap-2 text-sm text-[#009087] bg-[#009087]/10 p-3 rounded-lg border border-[#009087]/20">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <p>Analyzing image context...</p>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-2">
+                            <p className="text-sm font-semibold text-gray-300">Share Image Context</p>
+                            <div className="bg-white/5 border border-white/10 p-2 rounded-lg flex justify-center">
+                                <UploadButton
+                                    endpoint="imageUploader"
+                                    onClientUploadComplete={async (res) => {
+                                        if (res && res[0]) {
+                                            const url = res[0].url;
+                                            setIsAnalyzingImage(true);
+                                            try {
+                                                const description = await analyzeImage(url);
+                                                
+                                                // Inject into session silently using the hidden 'triggerResponseEnabled' flag
+                                                // This adds the image analysis to the AI's memory without forcing it to speak immediately
+                                                const sanitizedDescription = description.replace(/[\n\r]/g, ' ').substring(0, 1500);
+                                                
+                                                vapi.send({
+                                                    type: "add-message",
+                                                    message: { 
+                                                        role: "system", 
+                                                        content: `[Context Update: User uploaded an image. Analysis: ${sanitizedDescription}]` 
+                                                    },
+                                                    // @ts-ignore - The SDK supports this to prevent auto-response crashes
+                                                    triggerResponseEnabled: false
+                                                });
+
+                                                // Brief user message to let the user know it's done
+                                                vapi.send({
+                                                    type: "add-message",
+                                                    message: { 
+                                                        role: "user", 
+                                                        content: "I've shared an image with you. Can you see it?" 
+                                                    }
+                                                });
+
+                                                const newMessage = {
+                                                    id: crypto.randomUUID(),
+                                                    role: "user" as const,
+                                                    content: `🖼️ [Image Uploaded & Analyzed]`,
+                                                };
+
+                                                setMessages((prev) => {
+                                                    const updated = [newMessage, ...prev];
+                                                    messagesRef.current = updated;
+                                                    return updated;
+                                                });
+                                                
+                                            } catch (error: any) {
+                                                console.error("Image analysis failed:", error);
+                                                alert(error.message || "Failed to analyze image.");
+                                            } finally {
+                                                setIsAnalyzingImage(false);
+                                            }
+                                        }
+                                    }}
+                                    onUploadError={(error: Error) => {
+                                        alert(`Upload failed: ${error.message}`);
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
             <form onSubmit={handleSendMessage} className="flex flex-col gap-2 mt-auto">
                 <textarea 
                     value={textInput}

@@ -1,11 +1,63 @@
 'use server';
 
+import { auth } from "@clerk/nextjs/server";
+import { createSupabaseClient } from "../supabase";
+
+import * as fs from 'fs';
+
+export const canUploadImage = async () => {
+    try {
+        const { userId, has } = await auth();
+        if (!userId) {
+            fs.appendFileSync('debug.log', 'No userId found\n');
+            return false;
+        }
+
+        let limit = 5;
+        if (has({ plan: "core" })) {
+            limit = 25;
+        } else if (has({ plan: "pro_companion" })) {
+            limit = 18;
+        }
+
+        const supabase = createSupabaseClient();
+        const today = new Date();
+        today.setUTCHours(0, 0, 0, 0);
+
+        const { count, error } = await supabase
+            .from("image_uploads")
+            .select("id", { count: "exact" })
+            .eq("user_id", userId)
+            .gte("created_at", today.toISOString());
+
+        fs.appendFileSync('debug.log', `[${new Date().toISOString()}] userId: ${userId}, count: ${count}, error: ${JSON.stringify(error)}, limit: ${limit}\n`);
+
+        if (error) {
+            console.error("FULL ERROR OBJECT:", JSON.stringify(error, Object.getOwnPropertyNames(error || {}), 2));
+            return false;
+        }
+
+        return (count ?? 0) < limit;
+    } catch (e: any) {
+        fs.appendFileSync('debug.log', `Exception in canUploadImage: ${e.message}\n`);
+        throw e;
+    }
+};
+
 export const analyzeImage = async (imageUrl: string) => {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const apiToken = process.env.CLOUDFLARE_API_TOKEN;
 
   if (!accountId || !apiToken) {
     throw new Error("Missing Cloudflare credentials");
+  }
+
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  const isAllowed = await canUploadImage();
+  if (!isAllowed) {
+      throw new Error("Daily image analysis limit reached for your plan.");
   }
 
   try {
@@ -71,16 +123,25 @@ Be specific, accurate, and thorough. Include all key terms, values, and labels v
 
     const result = await cfResponse.json();
     
+    let description = "";
     // Cloudflare response format: { result: { description: "..." } } or similar depending on model
     // For LLaVA it usually returns { result: { response: "..." } }
     if (result.success && result.result && result.result.description) {
-        return result.result.description;
-    } 
-     if (result.success && result.result && result.result.response) {
-        return result.result.response;
+        description = result.result.description;
+    } else if (result.success && result.result && result.result.response) {
+        description = result.result.response;
+    } else {
+        throw new Error("Invalid response structure from Cloudflare AI");
     }
-    
-    throw new Error("Invalid response structure from Cloudflare AI");
+
+    // Log the successful analysis
+    const supabase = createSupabaseClient();
+    await supabase.from("image_uploads").insert({
+        user_id: userId,
+        image_url: imageUrl,
+    });
+
+    return description;
 
   } catch (error: any) {
     console.error("Image Analysis Error:", error);
