@@ -62,7 +62,7 @@ const CompanionIdPage = async ({ params }: PageProps) => {
         <CompanioComponent
            {...companion}
            companionId={id}
-           username={user.firstName!}
+           userName={user.firstName!}
            userImage = {user.imageUrl!}
            />
 

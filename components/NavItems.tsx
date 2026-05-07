@@ -8,7 +8,7 @@ import NavButton from './NavButton';
 {/*array of different objects we wanna map on */} 
 const navItems = [{label : "Home", href : "/"},
                 {label : "Companions",     href : "/companion"}, 
-                {label : "My journey", href : "my-journey"},]
+                {label : "My journey", href : "/my-journey"},]
 const NavItems = () => {
 
    //to know the glance of current page means points to what page currently on 

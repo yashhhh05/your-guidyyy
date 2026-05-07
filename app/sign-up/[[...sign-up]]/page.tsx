@@ -2,8 +2,8 @@ import { SignUp } from "@clerk/nextjs";
 
 export default function Page(){
     return (
-        <main className="flex justify-center items-center">
-            <SignUp/>
+        <main className="flex justify-center items-center min-h-screen bg-background p-4">
+            <SignUp />
         </main>
     )
 }

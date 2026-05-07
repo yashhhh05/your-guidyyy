@@ -18,6 +18,11 @@ export const TranscriptModal = ({ companionId, name }: TranscriptModalProps) => 
   const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedSession, setSelectedSession] = useState<any>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -29,6 +34,8 @@ export const TranscriptModal = ({ companionId, name }: TranscriptModalProps) => 
         .finally(() => setLoading(false));
     }
   }, [isOpen, companionId]);
+
+  if (!isMounted) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>

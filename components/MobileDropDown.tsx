@@ -10,8 +10,17 @@ import {
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link";
 import { Menu } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export function MobileDropDown() {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) return null;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

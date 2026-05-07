@@ -1,3 +1,5 @@
+import Script from "next/script";
+
 import { Geist, Geist_Mono, Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
@@ -40,6 +42,11 @@ export default function RootLayout({
         <Navbar/> {/* It means Navbar is common for all pages */}
         {children}  {/* children shows perticular what that page has ex sign in */}
         </ClerkProvider>
+        <Script
+          src="https://sutra-ai-theta.vercel.app/chatbot.js"
+          data-owner-id="usr_119949590119055385"
+        />
+        
       </body>
     </html>
   );

@@ -21,7 +21,7 @@ const Navbar = () => {
             <MobileDropDown />
             
             <SignedOut>{/* shows code if we signed out */}
-                  <SignInButton>
+                  <SignInButton mode="modal">
                       <NavButton className='text-sm px-6 py-2'>
                           Sign In
                       </NavButton>
