@@ -1,10 +1,12 @@
-import Script from "next/script";
 
 import { Geist, Geist_Mono, Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
+import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
+import { extractRouterConfig } from "uploadthing/server";
+import { ourFileRouter } from "@/app/api/uploadthing/core";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,14 +41,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${bricolage.variable} antialiased`}>
         <ClerkProvider appearance={{variables: {colorPrimary :"#fe5933"}}}>
-        <Navbar/> {/* It means Navbar is common for all pages */}
+        <NextSSRPlugin
+          routerConfig={extractRouterConfig(ourFileRouter)}
+        />
+        <Navbar/> 
         {children}  {/* children shows perticular what that page has ex sign in */}
         </ClerkProvider>
-        <Script
-          src="https://sutra-ai-theta.vercel.app/chatbot.js"
-          data-owner-id="usr_119949590119055385"
-        />
-        
       </body>
     </html>
   );
