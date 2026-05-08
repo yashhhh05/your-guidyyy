@@ -3,13 +3,10 @@
 import { auth } from "@clerk/nextjs/server";
 import { createSupabaseClient } from "../supabase";
 
-import * as fs from 'fs';
-
 export const canUploadImage = async () => {
     try {
         const { userId, has } = await auth();
         if (!userId) {
-            fs.appendFileSync('debug.log', 'No userId found\n');
             return false;
         }
 
@@ -30,16 +27,14 @@ export const canUploadImage = async () => {
             .eq("user_id", userId)
             .gte("created_at", today.toISOString());
 
-        fs.appendFileSync('debug.log', `[${new Date().toISOString()}] userId: ${userId}, count: ${count}, error: ${JSON.stringify(error)}, limit: ${limit}\n`);
-
         if (error) {
             console.error("FULL ERROR OBJECT:", JSON.stringify(error, Object.getOwnPropertyNames(error || {}), 2));
             return false;
         }
 
         return (count ?? 0) < limit;
-    } catch (e: any) {
-        fs.appendFileSync('debug.log', `Exception in canUploadImage: ${e.message}\n`);
+        } catch (e: any) {
+        console.error("Exception in canUploadImage:", e.message);
         throw e;
     }
 };

@@ -48,6 +48,7 @@ const CompanionForm = ({ type }: CompanionFormProps) => {
     const [analysisResult, setAnalysisResult] = useState("");
     const [uploadedImageUrl, setUploadedImageUrl] = useState("");
     const [hasUploadLimitReached, setHasUploadLimitReached] = useState(false);
+    const [error, setError] = useState("");
 
     //define form
      const form = useForm<z.infer<typeof formSchema>>({
@@ -192,9 +193,11 @@ const CompanionForm = ({ type }: CompanionFormProps) => {
                                             const description = await analyzeImage(url);
                                             setAnalysisResult(description);
                                             form.setValue("image_description", description);
+                                            setError(""); // Clear any previous errors
                                             console.log("Analysis:", description);
-                                        } catch (error) {
-                                            console.error("Analysis failed", error);
+                                        } catch (err: any) {
+                                            console.error("Analysis failed", err);
+                                            setError(err.message || "Failed to analyze image");
                                         } finally {
                                             setIsAnalyzing(false);
                                         }
@@ -219,7 +222,13 @@ const CompanionForm = ({ type }: CompanionFormProps) => {
                                 <div className="w-full">
                                     <p className="text-sm font-semibold mb-1">AI Analysis:</p>
                                     <div className="bg-muted p-3 rounded-md text-sm max-h-32 overflow-y-auto">
-                                        {analysisResult || "No description generated."}
+                                        {error ? (
+                                            <span className="text-red-500 flex items-center gap-1">
+                                                <AlertTriangle className="w-3 h-3 shrink-0" /> {error}
+                                            </span>
+                                        ) : (
+                                            analysisResult || "No description generated."
+                                        )}
                                     </div>
                                 </div>
                             )}
