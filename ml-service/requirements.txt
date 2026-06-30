@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+torch --extra-index-url https://download.pytorch.org/whl/cpu
+transformers==4.41.2
+pillow
+requests
+einops
+sentencepiece
+timm
+

@@ -66,43 +66,50 @@ const CompanionForm = ({ type }: CompanionFormProps) => {
     },
   })
 
-  // Reset image-related state when component mounts to prevent stale data
-  useEffect(() => {
-    setUploadedImageUrl("");
-    setAnalysisResult("");
-    form.setValue("image_description", "");
-    form.setValue("image_url", "");
+    const [mounted, setMounted] = useState(false);
 
-    if (isPrivate) {
-        canUploadImage().then(isAllowed => {
-            setHasUploadLimitReached(!isAllowed);
-        }).catch(console.error);
-    }
-  }, [isPrivate, form]); // Run on mount or when isPrivate changes
+    // Reset image-related state when component mounts to prevent stale data
+    useEffect(() => {
+      setMounted(true);
+      setUploadedImageUrl("");
+      setAnalysisResult("");
+      form.setValue("image_description", "");
+      form.setValue("image_url", "");
 
-  //Define a submit handler - what happens on submit the form
-  const onSubmit = async(values: z.infer<typeof formSchema>) => {
-    //pass values to server actions
-    console.log(values);
-    
-    // Ensure image description is in values if analyzed
-    if (analysisResult) {
-        values.image_description = analysisResult;
-    }
-    if (uploadedImageUrl) {
-        values.image_url = uploadedImageUrl;
+      if (isPrivate) {
+          canUploadImage().then(isAllowed => {
+              setHasUploadLimitReached(!isAllowed);
+          }).catch(console.error);
+      }
+    }, [isPrivate, form]); // Run on mount or when isPrivate changes
+
+    //Define a submit handler - what happens on submit the form
+    const onSubmit = async(values: z.infer<typeof formSchema>) => {
+      //pass values to server actions
+      console.log(values);
+      
+      // Ensure image description is in values if analyzed
+      if (analysisResult) {
+          values.image_description = analysisResult;
+      }
+      if (uploadedImageUrl) {
+          values.image_url = uploadedImageUrl;
+      }
+
+      const companion = await createCompanion(values);
+
+      //if companion is created redirect to companion page
+      if(companion){
+          redirect(`/companion/${companion.id}`);
+      }else{
+          console.log("Companion not created");
+          redirect("/");
+      }
     }
 
-    const companion = await createCompanion(values);
-
-    //if companion is created redirect to companion page
-    if(companion){
-        redirect(`/companion/${companion.id}`);
-    }else{
-        console.log("Companion not created");
-        redirect("/");
+    if (!mounted) {
+        return null;
     }
-  }
 
   return (
     <Form {...form}>

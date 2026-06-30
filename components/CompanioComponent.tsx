@@ -223,7 +223,7 @@ const CompanioComponent = ({companionId, userName, userImage,name, topic, subjec
                                                 const newMessage = {
                                                     id: crypto.randomUUID(),
                                                     role: "user" as const,
-                                                    content: `🖼️ [Image Uploaded & Analyzed]`,
+                                                    content: `🖼️ [Image Analyzed]: "${description}"`,
                                                 };
 
                                                 setMessages((prev) => {
